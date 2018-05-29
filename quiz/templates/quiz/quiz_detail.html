@@ -1,9 +1,11 @@
 <!DOCTYPE html>
+{% load static %}
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <title>{{ quiz.name }}</title>
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+    <link rel="stylesheet" href="{% static 'css/quiz_detail.css' %}">
 </head>
 <body>
 
@@ -11,6 +13,7 @@
 
 
 <form action="{% url 'submit_quiz' quiz.pk%}" method="post">
+    {% csrf_token %}
     <ol class="list-group list-group-flush">
         {% for question in questions %}
         <li class="list-group-item">
@@ -25,7 +28,29 @@
         </li>
         {% endfor %}
     </ol>
-<input type="submit" value="Submit" class="btn btn-default">
+{% if not questions.has_next %}
+    <input type="submit" value="Submit" class="btn btn-default">
+    <br>
+{% endif %}
+
+<div class="pagination">
+    {% if questions.has_previous %}
+           <a href="{% url 'get_quiz' quiz.pk %}?page={{ questions.previous_page_number }}">
+                <span class="glyphicon glyphicon-chevron-left pagination-nav"></span>
+            </a>
+    {% endif %}
+
+    <span style="font-size: 1.5em">
+    {{ questions.number }}
+    </span>
+
+    {% if questions.has_next %}
+            <a href="{% url 'get_quiz' quiz.pk %}?page={{ questions.next_page_number }}">
+                <span class="glyphicon glyphicon-chevron-right pagination-nav"></span>
+            </a>
+    {% endif %}
+</div>
+
 </form>
 
 

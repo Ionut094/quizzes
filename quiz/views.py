@@ -1,5 +1,6 @@
 from django.shortcuts import render, get_object_or_404, HttpResponse
 from django.views.decorators.csrf import csrf_exempt
+from django.core.paginator import Paginator
 
 from quiz import models
 
@@ -14,11 +15,19 @@ def index(request):
 def get_quiz_by_pk(request, pk):
 
     quiz = get_object_or_404(models.Quiz, pk=pk)
-    questions = quiz.questions.all()
+    all_questions = quiz.questions.all()
+
+    paginator = Paginator(all_questions, 2)
+
+    page = int(request.GET.get('page', 1))
+    if page <= 0:
+        page = 1
+
+    questions = paginator.get_page(page)
+
     return render(request, 'quiz/quiz_detail.html', {'quiz': quiz, 'questions': questions})
 
 
-@csrf_exempt
 def submit_quiz(request, pk):
     answers = request.POST.getlist('answers')
     grouped_answers = _group_answers_by_question(answers)
