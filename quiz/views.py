@@ -1,3 +1,4 @@
+import operator
 from django.shortcuts import render, get_object_or_404, HttpResponse, redirect
 from django.core.paginator import Paginator
 from quiz import models
@@ -42,8 +43,11 @@ def submit_quiz(request, pk):
 
     answer_ids = [a_id for q_id in question_ids for a_id in grouped_answers[q_id]]
     score = _calculate_score(answer_ids)
+    result = _compute_result(quiz, score)
 
-    return HttpResponse('Your score was: {0}'.format(score))
+    request.session['saved-answers'] = {}
+
+    return render(request, 'quiz/quiz_result.html', {'quiz': quiz, 'score': score, 'result': result})
 
 
 def save_answers_from_prev_page(request, pk):
@@ -111,3 +115,11 @@ def _get_checked_answers(saved_answers, questions):
         elif str(pk) in saved_answers:
             checked_answers = checked_answers + saved_answers[str(pk)]
     return checked_answers
+
+
+def _compute_result(quiz, score):
+    results = sorted(quiz.results.all(), key=operator.attrgetter('score'))
+    for i in range(0, len(results) - 2):
+        if results[i].score < score < results[i + 1].score:
+            return results[i+1]
+    return results[len(results) - 1]

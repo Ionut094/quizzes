@@ -43,7 +43,7 @@ class Answer(models.Model):
 class Result(models.Model):
     text = models.CharField(max_length=300)
     score = models.IntegerField()
-    quiz = models.ForeignKey(Quiz, on_delete=models.CASCADE, related_name='answers')
+    quiz = models.ForeignKey(Quiz, on_delete=models.CASCADE, related_name='results')
 
     def __str__(self):
         return self.text + " -- Score: {0}".format(self.score)
