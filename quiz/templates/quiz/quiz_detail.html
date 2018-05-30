@@ -35,9 +35,9 @@
 
 <div class="pagination">
     {% if questions.has_previous %}
-           <a href="{% url 'get_quiz' quiz.pk %}?page={{ questions.previous_page_number }}">
+           <button class="btn-pag-nav" formaction="prev-page/?page={{ questions.previous_page_number }}" formmethod="post">
                 <span class="glyphicon glyphicon-chevron-left pagination-nav"></span>
-            </a>
+           </button>
     {% endif %}
 
     <span style="font-size: 1.5em">
@@ -45,9 +45,9 @@
     </span>
 
     {% if questions.has_next %}
-            <a href="{% url 'get_quiz' quiz.pk %}?page={{ questions.next_page_number }}">
+            <button class="btn-pag-nav" formaction="next-page/?page={{ questions.next_page_number }}" formmethod="post">
                 <span class="glyphicon glyphicon-chevron-right pagination-nav"></span>
-            </a>
+            </button>
     {% endif %}
 </div>
 

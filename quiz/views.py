@@ -1,4 +1,4 @@
-from django.shortcuts import render, get_object_or_404, HttpResponse
+from django.shortcuts import render, get_object_or_404, HttpResponse, redirect
 from django.views.decorators.csrf import csrf_exempt
 from django.core.paginator import Paginator
 
@@ -13,7 +13,6 @@ def index(request):
 
 
 def get_quiz_by_pk(request, pk):
-
     quiz = get_object_or_404(models.Quiz, pk=pk)
     all_questions = quiz.questions.all()
 
@@ -29,8 +28,8 @@ def get_quiz_by_pk(request, pk):
 
 
 def submit_quiz(request, pk):
-    answers = request.POST.getlist('answers')
-    grouped_answers = _group_answers_by_question(answers)
+    _save_answers_to_session(request)
+    grouped_answers = _get_normalized_dict(request.session['saved-answers'])
 
     quiz = get_object_or_404(models.Quiz, pk=pk)
     question_ids = [question.id for question in quiz.questions.all()]
@@ -42,6 +41,18 @@ def submit_quiz(request, pk):
     score = _calculate_score(answer_ids)
 
     return HttpResponse('Your score was: {0}'.format(score))
+
+
+def save_answers_from_prev_page(request, pk):
+    _save_answers_to_session(request)
+    page = request.GET['page']
+    return redirect(f'/quiz/{pk}/?page={page}')
+
+
+def save_answers_from_next_page(request, pk):
+    _save_answers_to_session(request)
+    page = request.GET['page']
+    return redirect(f'/quiz/{pk}/?page={page}')
 
 
 def _group_answers_by_question(answers):
@@ -56,16 +67,33 @@ def _group_answers_by_question(answers):
     return answers_by_questions
 
 
-def _are_valid(answers_by_question,question_ids):
-   for q_id in question_ids:
-       if q_id not in answers_by_question:
-           return False
-       else:
-           if not answers_by_question[q_id]:
+def _are_valid(answers_by_question, question_ids):
+    for q_id in question_ids:
+        if q_id not in answers_by_question:
+            return False
+        else:
+            if not answers_by_question[q_id]:
                 return False
-   return True
+    return True
 
 
 def _calculate_score(answers):
 
     return sum([models.Answer.objects.get(pk=a_id).score for a_id in answers])
+
+
+def _save_answers_to_session(request):
+    answers = request.POST.getlist('answers')
+    grouped_answers = _group_answers_by_question(answers)
+
+    saved_answers = request.session.setdefault('saved-answers', {})
+    saved_answers.update(grouped_answers)
+    request.session['saved-answers'] = saved_answers
+
+
+def _get_normalized_dict(grouped_answers):
+    answers_by_question = {}
+    for key in grouped_answers.keys():
+        answers_by_question[int(key)] = grouped_answers[key]
+
+    return answers_by_question

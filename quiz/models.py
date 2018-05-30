@@ -13,6 +13,7 @@ class Quiz(models.Model):
 
     class Meta:
         verbose_name_plural = 'Quizzes'
+        ordering = ['pk']
 
 
 class Question(models.Model):
@@ -23,6 +24,9 @@ class Question(models.Model):
         repr1 = reprlib.Repr()
         repr1.maxstring = 200
         return repr1.repr(self.text)
+
+    class Meta:
+        ordering = ['pk']
 
 
 class Answer(models.Model):
