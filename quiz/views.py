@@ -1,7 +1,5 @@
 from django.shortcuts import render, get_object_or_404, HttpResponse, redirect
-from django.views.decorators.csrf import csrf_exempt
 from django.core.paginator import Paginator
-
 from quiz import models
 
 
@@ -24,7 +22,12 @@ def get_quiz_by_pk(request, pk):
 
     questions = paginator.get_page(page)
 
-    return render(request, 'quiz/quiz_detail.html', {'quiz': quiz, 'questions': questions})
+    saved_answers = request.session.get('saved-answers', {})
+
+    checked_answers = _get_checked_answers(saved_answers, questions)
+
+    return render(request, 'quiz/quiz_detail.html', {'quiz': quiz, 'questions': questions,
+                                                     'checked_answers': checked_answers})
 
 
 def submit_quiz(request, pk):
@@ -97,3 +100,14 @@ def _get_normalized_dict(grouped_answers):
         answers_by_question[int(key)] = grouped_answers[key]
 
     return answers_by_question
+
+
+def _get_checked_answers(saved_answers, questions):
+    checked_answers = []
+    for pk in [question.pk for question in questions]:
+
+        if pk in saved_answers:
+            checked_answers = checked_answers + saved_answers[pk]
+        elif str(pk) in saved_answers:
+            checked_answers = checked_answers + saved_answers[str(pk)]
+    return checked_answers

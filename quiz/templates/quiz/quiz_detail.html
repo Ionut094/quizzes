@@ -6,6 +6,7 @@
     <title>{{ quiz.name }}</title>
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
     <link rel="stylesheet" href="{% static 'css/quiz_detail.css' %}">
+    <script src="https://code.jquery.com/jquery-3.3.1.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
 </head>
 <body>
 
@@ -21,7 +22,7 @@
             <ul class="list-group">
                 {% for answer in question.answers.all %}
                     <li class="list-group-item">
-                        <input type="checkbox" name="answers" value="{{ question.pk }},{{ answer.pk }}">{{ answer.text }}
+                        <input type="checkbox" id="{{ answer.pk }}" name="answers" value="{{ question.pk }},{{ answer.pk }}">{{ answer.text }}
                     </li>
                 {% endfor %}
             </ul>
@@ -53,6 +54,14 @@
 
 </form>
 
+<script type="text/javascript">
+    var checked_answers = {{ checked_answers }};
+    for(let answer_id of checked_answers) {
+        let selector = "#"+answer_id;
+        $(selector).attr('checked', true);
+    }
+
+</script>
 
 </body>
 </html>
