@@ -1,4 +1,5 @@
 import operator
+import inspect
 from django.shortcuts import render, get_object_or_404, HttpResponse, redirect
 from django.core.paginator import Paginator
 from quiz import models
@@ -54,13 +55,15 @@ def submit_quiz(request, pk):
 
 
 def save_answers_from_prev_page(request, pk):
-    _save_answers_to_session(request)
+    # _save_answers_to_session(request)
+    print(request.POST)
     page = request.GET['page']
     return redirect(f'/quiz/{pk}/?page={page}')
 
 
 def save_answers_from_next_page(request, pk):
-    _save_answers_to_session(request)
+    # _save_answers_to_session(request)
+    print(request.POST)
     page = request.GET['page']
     return redirect(f'/quiz/{pk}/?page={page}')
 
