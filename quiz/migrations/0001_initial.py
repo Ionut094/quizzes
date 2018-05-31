@@ -41,17 +41,17 @@ class Migration(migrations.Migration):
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('text', models.CharField(max_length=300)),
                 ('score', models.IntegerField()),
-                ('quiz', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='quizz.Quiz')),
+                ('quiz', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='quiz.Quiz')),
             ],
         ),
         migrations.AddField(
             model_name='question',
             name='quiz',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='quizz.Quiz'),
+            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='quiz.Quiz'),
         ),
         migrations.AddField(
             model_name='answer',
             name='question',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='quizz.Question'),
+            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='quiz.Question'),
         ),
     ]

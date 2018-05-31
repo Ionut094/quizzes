@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ quiz.name }}</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+</head>
+<body>
+<h2>Name: {{ quiz.name }}</h2>
+<h3>Description: {{ quiz.description }}</h3>
+<p>Your score was: {{ score }}</p>
+{% if result %}
+<p>{{ result.text }}</p>
+{% endif %}
+<br>
+<h4>Suggested answers:</h4>
+<ul class="list-group">
+    {% for answer in suggested_answers %}
+        {{ answer.question.text }}
+        <li class="list-group-item list-group-item-success">{{ answer.text }}</li>
+    {% endfor %}
+</ul>
+
+
+<form action="{% url 'home' %}">
+    <input type="submit" value="Go to Home" class="btn btn-primary">
+</form>
+</body>
+</html>

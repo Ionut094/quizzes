@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ quiz.name }}</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+    <link rel="stylesheet" href="{% static 'css/quiz_detail.css' %}">
+    <script src="https://code.jquery.com/jquery-3.3.1.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
+</head>
+<body>
+
+<h2>{{ quiz.description }}</h2>
+
+
+<form action="{% url 'submit_quiz' quiz.pk%}" method="post">
+    {% csrf_token %}
+    <ol class="list-group list-group-flush">
+        {% for question in questions %}
+        <li class="list-group-item">
+        <p>{{ question.text }}</p>
+            <ul class="list-group">
+                {% for answer in question.answers.all %}
+                    <li class="list-group-item">
+                        <input type="checkbox" id="{{ answer.pk }}" name="answers" value="{{ question.pk }},{{ answer.pk }}">{{ answer.text }}
+                    </li>
+                {% endfor %}
+            </ul>
+        </li>
+        {% endfor %}
+    </ol>
+{% if not questions.has_next %}
+    <input type="submit" value="Submit" class="btn btn-default">
+    <br>
+{% endif %}
+
+<div class="pagination">
+    {% if questions.has_previous %}
+           <button class="btn-pag-nav" formaction="prev-page/?page={{ questions.previous_page_number }}" formmethod="post">
+                <span class="glyphicon glyphicon-chevron-left pagination-nav"></span>
+           </button>
+    {% endif %}
+
+    <span style="font-size: 1.5em">
+    {{ questions.number }}
+    </span>
+
+    {% if questions.has_next %}
+            <button class="btn-pag-nav" formaction="next-page/?page={{ questions.next_page_number }}" formmethod="post">
+                <span class="glyphicon glyphicon-chevron-right pagination-nav"></span>
+            </button>
+    {% endif %}
+</div>
+
+</form>
+
+<script type="text/javascript">
+    var checked_answers = {{ checked_answers }};
+    for(let answer_id of checked_answers) {
+        let selector = "#"+answer_id;
+        $(selector).attr('checked', true);
+    }
+
+</script>
+
+</body>
+</html>
