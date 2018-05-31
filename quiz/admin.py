@@ -24,7 +24,7 @@ class AnswerAdmin(admin.ModelAdmin):
     ordering = ('-score', )
 
 
-@admin.register(Result)
+@admin.register(ScoreRange)
 class ResultAdmin(admin.ModelAdmin):
     fields = ('text', 'score', 'quiz')
     ordering = ('-score', )

@@ -118,8 +118,15 @@ def _get_checked_answers(saved_answers, questions):
 
 
 def _compute_result(quiz, score):
-    results = sorted(quiz.results.all(), key=operator.attrgetter('score'))
-    for i in range(0, len(results) - 2):
-        if results[i].score < score < results[i + 1].score:
-            return results[i+1]
-    return results[len(results) - 1]
+    score_ranges = quiz.score_ranges.all()
+    if not score_ranges:
+        return None
+
+    ranges = zip(score_ranges, score_ranges[1:])
+    if not ranges:
+        return None
+
+    for s_range in ranges:
+        if s_range[0].score < score < s_range[1].score:
+            return s_range[0]
+    return score_ranges[len(score_ranges) - 1]

@@ -9,7 +9,9 @@
 <h2>Name: {{ quiz.name }}</h2>
 <h3>Description: {{ quiz.description }}</h3>
 <p>Your score was: {{ score }}</p>
+{% if result %}
 <p>{{ result.text }}</p>
+{% endif %}
 <form action="{% url 'home' %}">
     <input type="submit" value="Go to Home" class="btn btn-primary">
 </form>

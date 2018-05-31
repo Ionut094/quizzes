@@ -40,10 +40,10 @@ class Answer(models.Model):
         return repr1.repr(self.text) + ' Score: {0}'.format(self.score)
 
 
-class Result(models.Model):
+class ScoreRange(models.Model):
     text = models.CharField(max_length=300)
     score = models.IntegerField()
-    quiz = models.ForeignKey(Quiz, on_delete=models.CASCADE, related_name='results')
+    quiz = models.ForeignKey(Quiz, on_delete=models.CASCADE, related_name='score_ranges')
 
     def __str__(self):
         return self.text + " -- Score: {0}".format(self.score)
