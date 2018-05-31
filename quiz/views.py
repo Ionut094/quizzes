@@ -47,7 +47,10 @@ def submit_quiz(request, pk):
 
     request.session['saved-answers'] = {}
 
-    return render(request, 'quiz/quiz_result.html', {'quiz': quiz, 'score': score, 'result': result})
+    suggested_answers = _get_suggested_answers(answer_ids, question_ids)
+
+    return render(request, 'quiz/quiz_result.html',
+                  {'quiz': quiz, 'score': score, 'result': result, 'suggested_answers': suggested_answers})
 
 
 def save_answers_from_prev_page(request, pk):
@@ -127,3 +130,13 @@ def _compute_result(quiz, score):
             return s_range
 
     return score_ranges[-1]
+
+
+def _get_suggested_answers(answer_ids, question_ids):
+    suggested_answers = []
+    for question_id in question_ids:
+        question = models.Question.objects.get(pk=question_id)
+        suggested_answers.append(max(question.answers.filter(score__gt=0).exclude(pk__in=answer_ids),
+                                     key=operator.attrgetter('score')))
+        
+    return suggested_answers
