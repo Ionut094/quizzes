@@ -33,7 +33,8 @@ def get_quiz_by_pk(request, pk):
 
 
 def submit_quiz(request, pk):
-    _save_answers_to_session(request)
+    qa_dict = _parse_questions_and_answers_from_dict(request.POST)
+    _save_answers_to_session(request, qa_dict)
     grouped_answers = _get_normalized_dict(request.session['saved-answers'])
 
     quiz = get_object_or_404(models.Quiz, pk=pk)
@@ -42,7 +43,7 @@ def submit_quiz(request, pk):
     if not _are_valid(grouped_answers, question_ids):
         return HttpResponse('Please answer all the questions')
 
-    answer_ids = [a_id for q_id in question_ids for a_id in grouped_answers[q_id]]
+    answer_ids = grouped_answers.values()
     score = _calculate_score(answer_ids)
     result = _compute_result(quiz, score)
 
@@ -55,29 +56,17 @@ def submit_quiz(request, pk):
 
 
 def save_answers_from_prev_page(request, pk):
-    # _save_answers_to_session(request)
-    print(request.POST)
+    qa_dict = _parse_questions_and_answers_from_dict(request.POST)
+    _save_answers_to_session(request, qa_dict)
     page = request.GET['page']
     return redirect(f'/quiz/{pk}/?page={page}')
 
 
 def save_answers_from_next_page(request, pk):
-    # _save_answers_to_session(request)
-    print(request.POST)
+    qa_dict = _parse_questions_and_answers_from_dict(request.POST)
+    _save_answers_to_session(request, qa_dict)
     page = request.GET['page']
     return redirect(f'/quiz/{pk}/?page={page}')
-
-
-def _group_answers_by_question(answers):
-    answers_by_questions = {}
-
-    for tuple_str in answers:
-        ids = tuple_str.split(',')
-        q_id = int(ids[0])
-        a_id = int(ids[1])
-        answers_by_questions.setdefault(q_id, []).append(a_id)
-
-    return answers_by_questions
 
 
 def _are_valid(answers_by_question, question_ids):
@@ -95,12 +84,9 @@ def _calculate_score(answers):
     return sum([models.Answer.objects.get(pk=a_id).score for a_id in answers])
 
 
-def _save_answers_to_session(request):
-    answers = request.POST.getlist('answers')
-    grouped_answers = _group_answers_by_question(answers)
-
+def _save_answers_to_session(request, answers):
     saved_answers = request.session.setdefault('saved-answers', {})
-    saved_answers.update(grouped_answers)
+    saved_answers.update(answers)
     request.session['saved-answers'] = saved_answers
 
 
@@ -115,11 +101,10 @@ def _get_normalized_dict(grouped_answers):
 def _get_checked_answers(saved_answers, questions):
     checked_answers = []
     for pk in [question.pk for question in questions]:
-
         if pk in saved_answers:
-            checked_answers = checked_answers + saved_answers[pk]
+            checked_answers.append(saved_answers[pk])
         elif str(pk) in saved_answers:
-            checked_answers = checked_answers + saved_answers[str(pk)]
+            checked_answers.append(saved_answers[str(pk)])
     return checked_answers
 
 
@@ -132,7 +117,7 @@ def _compute_result(quiz, score):
         if s_range.score > score:
             return s_range
 
-    return score_ranges[-1]
+    return score_ranges.last()
 
 
 def _get_suggested_answers(answer_ids, question_ids):
@@ -143,3 +128,13 @@ def _get_suggested_answers(answer_ids, question_ids):
                                      key=operator.attrgetter('score')))
         
     return suggested_answers
+
+
+def _parse_questions_and_answers_from_dict(post_dict):
+    qa_dict = {}
+    for key, answer_pk in post_dict.items():
+        if key.startswith('answer'):
+            i = key.find('[')
+            question_pk = int(key[i + 1])
+            qa_dict[question_pk] = int(answer_pk)
+    return qa_dict
