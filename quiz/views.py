@@ -124,7 +124,11 @@ def _get_suggested_answers(answer_ids, question_ids):
     suggested_answers = []
     for question_id in question_ids:
         question = models.Question.objects.get(pk=question_id)
-        suggested_answers.append(max(question.answers.filter(score__gt=0).exclude(pk__in=answer_ids),
+        selected_answer = question.answers.filter(pk__in=answer_ids)[0]
+        remaining_answers = question.answers.filter(score__gt=selected_answer.score)
+        if not remaining_answers:
+            continue
+        suggested_answers.append(max(remaining_answers,
                                      key=operator.attrgetter('score')))
         
     return suggested_answers

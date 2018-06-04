@@ -13,6 +13,8 @@
 <p>{{ result.text }}</p>
 {% endif %}
 <br>
+
+{% if suggested_answers %}
 <h4>Suggested answers:</h4>
 <ul class="list-group">
     {% for answer in suggested_answers %}
@@ -20,6 +22,9 @@
         <li class="list-group-item list-group-item-success">{{ answer.text }}</li>
     {% endfor %}
 </ul>
+{% else %}
+    <h4>Congratulations! You have obtained the maximum score.</h4>
+{% endif %}
 
 
 <form action="{% url 'home' %}">
