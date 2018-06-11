@@ -1,5 +1,6 @@
-from django.db import models
 import reprlib
+from django.utils import timezone
+from django.db import models
 
 
 class Quiz(models.Model):
@@ -47,3 +48,20 @@ class ScoreRange(models.Model):
 
     def __str__(self):
         return self.text + " -- Score: {0}".format(self.score)
+
+
+class FeaturedQuestionsPage(models.Model):
+    title = models.CharField(max_length=200)
+    created = models.DateField(default=timezone.now)
+    active_until = models.DateField(null=True, blank=True)
+
+    def __str__(self):
+        return self.title
+
+
+class FeaturedQuestion(models.Model):
+    question = models.ForeignKey(Question, null=True, on_delete=models.SET_NULL)
+    featured_page = models.ForeignKey(FeaturedQuestionsPage, null=True, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return self.question.text

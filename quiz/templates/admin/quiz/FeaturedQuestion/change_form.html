@@ -1,0 +1,13 @@
+{% extends 'admin/change_form.html' %}
+{% load i18n admin_urls %}
+{% block  extrahead %}
+    <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
+{# block.super should be called only after importing jquery 2, or else it will throw an error when instantiating the widget #}
+    {{ block.super }}
+    {{ form.media.css }}
+{% endblock %}
+
+{% block bodyclass %}
+    {{ block.super }}
+    {{ form.media.js }}
+{% endblock %}

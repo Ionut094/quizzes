@@ -1,5 +1,6 @@
 from django.contrib import admin
 from .models import *
+from .forms import *
 
 
 @admin.register(Quiz)
@@ -28,3 +29,13 @@ class AnswerAdmin(admin.ModelAdmin):
 class ResultAdmin(admin.ModelAdmin):
     fields = ('text', 'score', 'quiz')
     ordering = ('-score', )
+
+
+@admin.register(FeaturedQuestionsPage)
+class FeaturedQuestionsPageAdmin(admin.ModelAdmin):
+    form = FeaturedQuestionsPageForm
+
+
+@admin.register(FeaturedQuestion)
+class FeaturedQuestionAdmin(admin.ModelAdmin):
+    form = FeaturedQuestionForm
