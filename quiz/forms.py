@@ -1,4 +1,3 @@
-from django_select2 import forms as ds2_froms
 from django import forms
 from . import models
 from . import fields

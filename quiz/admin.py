@@ -31,11 +31,21 @@ class ResultAdmin(admin.ModelAdmin):
     ordering = ('-score', )
 
 
-@admin.register(FeaturedQuestionsPage)
-class FeaturedQuestionsPageAdmin(admin.ModelAdmin):
-    form = FeaturedQuestionsPageForm
-
-
 @admin.register(FeaturedQuestion)
 class FeaturedQuestionAdmin(admin.ModelAdmin):
     form = FeaturedQuestionForm
+
+
+class FeaturedQuestionInLine(admin.TabularInline):
+    model = FeaturedQuestion
+    form = FeaturedQuestionForm
+    extra = 4
+    max_num = 4
+
+
+@admin.register(FeaturedQuestionsPage)
+class FeaturedQuestionsPageAdmin(admin.ModelAdmin):
+    form = FeaturedQuestionsPageForm
+    inlines = [
+        FeaturedQuestionInLine
+    ]
