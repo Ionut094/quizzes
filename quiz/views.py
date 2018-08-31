@@ -4,6 +4,9 @@ from django.core.paginator import Paginator
 from quiz import models
 
 
+QUESTIONS_PER_PAGE = 2
+
+
 def index(request):
 
     quizzes = models.Quiz.objects.all()
@@ -15,7 +18,7 @@ def get_quiz_by_pk(request, pk):
     quiz = get_object_or_404(models.Quiz, pk=pk)
     all_questions = quiz.questions.all()
 
-    paginator = Paginator(all_questions, 2)
+    paginator = Paginator(all_questions, QUESTIONS_PER_PAGE)
 
     page = int(request.GET.get('page', 1))
     if page <= 0:
@@ -32,49 +35,41 @@ def get_quiz_by_pk(request, pk):
 
 
 def submit_quiz(request, pk):
-    _save_answers_to_session(request)
+    qa_dict = _parse_questions_and_answers_from_dict(request.POST)
+    _save_answers_to_session(request, qa_dict)
     grouped_answers = _get_normalized_dict(request.session['saved-answers'])
 
     quiz = get_object_or_404(models.Quiz, pk=pk)
-    question_ids = [question.id for question in quiz.questions.all()]
+    all_questions = quiz.questions.all()
+    question_ids = [question.id for question in all_questions]
 
     if not _are_valid(grouped_answers, question_ids):
         return HttpResponse('Please answer all the questions')
 
-    answer_ids = [a_id for q_id in question_ids for a_id in grouped_answers[q_id]]
+    answer_ids = grouped_answers.values()
     score = _calculate_score(answer_ids)
     result = _compute_result(quiz, score)
 
     request.session['saved-answers'] = {}
 
-    suggested_answers = _get_suggested_answers(answer_ids, question_ids)
+    suggested_answers = _get_suggested_answers(answer_ids, all_questions)
 
     return render(request, 'quiz/quiz_result.html',
                   {'quiz': quiz, 'score': score, 'result': result, 'suggested_answers': suggested_answers})
 
 
 def save_answers_from_prev_page(request, pk):
-    _save_answers_to_session(request)
+    qa_dict = _parse_questions_and_answers_from_dict(request.POST)
+    _save_answers_to_session(request, qa_dict)
     page = request.GET['page']
     return redirect(f'/quiz/{pk}/?page={page}')
 
 
 def save_answers_from_next_page(request, pk):
-    _save_answers_to_session(request)
+    qa_dict = _parse_questions_and_answers_from_dict(request.POST)
+    _save_answers_to_session(request, qa_dict)
     page = request.GET['page']
     return redirect(f'/quiz/{pk}/?page={page}')
-
-
-def _group_answers_by_question(answers):
-    answers_by_questions = {}
-
-    for tuple_str in answers:
-        ids = tuple_str.split(',')
-        q_id = int(ids[0])
-        a_id = int(ids[1])
-        answers_by_questions.setdefault(q_id, []).append(a_id)
-
-    return answers_by_questions
 
 
 def _are_valid(answers_by_question, question_ids):
@@ -92,12 +87,9 @@ def _calculate_score(answers):
     return sum([models.Answer.objects.get(pk=a_id).score for a_id in answers])
 
 
-def _save_answers_to_session(request):
-    answers = request.POST.getlist('answers')
-    grouped_answers = _group_answers_by_question(answers)
-
+def _save_answers_to_session(request, answers):
     saved_answers = request.session.setdefault('saved-answers', {})
-    saved_answers.update(grouped_answers)
+    saved_answers.update(answers)
     request.session['saved-answers'] = saved_answers
 
 
@@ -112,11 +104,10 @@ def _get_normalized_dict(grouped_answers):
 def _get_checked_answers(saved_answers, questions):
     checked_answers = []
     for pk in [question.pk for question in questions]:
-
         if pk in saved_answers:
-            checked_answers = checked_answers + saved_answers[pk]
+            checked_answers.append(saved_answers[pk])
         elif str(pk) in saved_answers:
-            checked_answers = checked_answers + saved_answers[str(pk)]
+            checked_answers.append(saved_answers[str(pk)])
     return checked_answers
 
 
@@ -129,14 +120,61 @@ def _compute_result(quiz, score):
         if s_range.score > score:
             return s_range
 
-    return score_ranges[-1]
+    return score_ranges.last()
 
 
-def _get_suggested_answers(answer_ids, question_ids):
+def _get_suggested_answers(answer_ids, all_questions):
+
+    def get_selected_answer_for_question_by_related_answer(answer):
+        question = answer.question
+        return question.answers.filter(pk__in=answer_ids)[0]
+
+    def calculate_coefficient(answer):
+        selected_answer = get_selected_answer_for_question_by_related_answer(answer)
+        return answer.score - selected_answer.score
+
     suggested_answers = []
-    for question_id in question_ids:
-        question = models.Question.objects.get(pk=question_id)
-        suggested_answers.append(max(question.answers.filter(score__gt=0).exclude(pk__in=answer_ids),
-                                     key=operator.attrgetter('score')))
-        
+    questions_per_page = _group_questions_per_page(all_questions)
+    for page, questions in questions_per_page.items():
+        answers = _get_answers_for_questions(questions)
+        unselected_answers = [answer for answer in answers if answer.pk not in answer_ids]
+        viable_answers = [answer for answer in unselected_answers if _is_answer_gt_selected_answer(answer, answer_ids)]
+        if not viable_answers:
+            continue
+        suggested_answers.append(max(viable_answers, key=calculate_coefficient))
     return suggested_answers
+
+
+def _parse_questions_and_answers_from_dict(post_dict):
+    qa_dict = {}
+    for key, answer_pk in post_dict.items():
+        if key.startswith('answer'):
+            i = key.find('[')
+            question_pk = int(key[i + 1])
+            qa_dict[question_pk] = int(answer_pk)
+    return qa_dict
+
+
+def _group_questions_per_page(questions):
+    questions_per_page = {}
+    pages = range(1, int(len(questions)/QUESTIONS_PER_PAGE) + 1)
+    for page in pages:
+        lb = (page-1)*QUESTIONS_PER_PAGE
+        ub = page*QUESTIONS_PER_PAGE
+        questions_per_page[page] = questions[lb:ub]
+
+    return questions_per_page
+
+
+def _get_answers_for_questions(questions):
+    answers = []
+    for question in questions:
+        answers = answers + list(question.answers.all())
+    return answers
+
+
+def _is_answer_gt_selected_answer(answer, selected_answers):
+    question = answer.question
+    selected_answer = question.answers.filter(pk__in=selected_answers)[0]
+    return selected_answer.score < answer.score
+

@@ -22,7 +22,7 @@
             <ul class="list-group">
                 {% for answer in question.answers.all %}
                     <li class="list-group-item">
-                        <input type="checkbox" id="{{ answer.pk }}" name="answers" value="{{ question.pk }},{{ answer.pk }}">{{ answer.text }}
+                        <input type="radio" name="answers[{{ question.pk }}]" value="{{ answer.pk }}" id="{{ answer.pk }}">{{ answer.text }}
                     </li>
                 {% endfor %}
             </ul>
@@ -60,6 +60,8 @@
         let selector = "#"+answer_id;
         $(selector).attr('checked', true);
     }
+
+
 
 </script>
 
